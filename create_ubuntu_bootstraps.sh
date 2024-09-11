@@ -20,8 +20,9 @@ fi
 
 # Keep in mind that although you can choose any version of Ubuntu/Debian
 # here, but this script has only been tested with Ubuntu 18.04 Bionic
-export CHROOT_DISTRO="bionic"
-export CHROOT_MIRROR="https://ftp.uni-stuttgart.de/ubuntu/"
+export CHROOT_DISTRO="focal"
+#export CHROOT_MIRROR="https://ftp.uni-stuttgart.de/ubuntu/"
+export CHROOT_MIRROR="http://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
 
 # Set your preferred path for storing chroots
 # Also don't forget to change the path to the chroots in the build_wine.sh
@@ -93,13 +94,13 @@ echo deb-src '${CHROOT_MIRROR}' ${CHROOT_DISTRO}-updates main universe >> /etc/a
 echo deb-src '${CHROOT_MIRROR}' ${CHROOT_DISTRO}-security main universe >> /etc/apt/sources.list
 apt-get update
 apt-get -y upgrade
-apt-get -y dist-upgrade
+apt-get -y 
 apt-get -y install software-properties-common
 add-apt-repository -y ppa:ubuntu-toolchain-r/test
 add-apt-repository -y ppa:cybermax-dexter/mingw-w64-backport
 apt-get update
 apt-get -y build-dep wine-development libsdl2 libvulkan1 python3
-apt-get -y install ccache gcc-11 g++-11 wget git gcc-mingw-w64 g++-mingw-w64 ninja-build
+apt-get -y install ccache gcc-11 g++-11 wget git gcc-mingw-w64 g++-mingw-w64 ninja-build curl bison
 apt-get -y install libxpresent-dev libjxr-dev libusb-1.0-0-dev libgcrypt20-dev libpulse-dev libudev-dev libsane-dev libv4l-dev libkrb5-dev libgphoto2-dev liblcms2-dev libcapi20-dev
 apt-get -y install libjpeg62-dev samba-dev
 apt-get -y install libpcsclite-dev libcups2-dev
@@ -109,22 +110,81 @@ apt-get -y purge *gstreamer* --purge --autoremove
 apt-get -y clean
 apt-get -y autoclean
 export PATH="/usr/local/bin:\${PATH}"
-mkdir /opt/build_libs
+if [ -d "/opt/build_libs" ];then
+	echo "rebuild"
+else
+	mkdir /opt/build_libs
+fi
+
 cd /opt/build_libs
-wget -O sdl.tar.gz https://www.libsdl.org/release/SDL2-${sdl2_version}.tar.gz
-wget -O faudio.tar.gz https://github.com/FNA-XNA/FAudio/archive/${faudio_version}.tar.gz
-wget -O vulkan-loader.tar.gz https://github.com/KhronosGroup/Vulkan-Loader/archive/v${vulkan_loader_version}.tar.gz
-wget -O vulkan-headers.tar.gz https://github.com/KhronosGroup/Vulkan-Headers/archive/v${vulkan_headers_version}.tar.gz
-wget -O spirv-headers.tar.gz https://github.com/KhronosGroup/SPIRV-Headers/archive/${spirv_headers_version}.tar.gz
-wget -O libpcap.tar.gz https://www.tcpdump.org/release/libpcap-${libpcap_version}.tar.gz
-wget -O libxkbcommon.tar.xz https://xkbcommon.org/download/libxkbcommon-${libxkbcommon_version}.tar.xz
-wget -O python3.tar.gz https://www.python.org/ftp/python/${python3_version}/Python-${python3_version}.tgz
-wget -O meson.tar.gz https://github.com/mesonbuild/meson/releases/download/${meson_version}/meson-${meson_version}.tar.gz
-wget -O mingw.tar.xz http://techer.pascal.free.fr/Red-Rose_MinGW-w64-Toolchain/Red-Rose-MinGW-w64-Posix-Urct-v12.0.0.r0.g819a6ec2e-Gcc-11.4.1.tar.xz
-wget -O /usr/include/linux/ntsync.h https://raw.githubusercontent.com/zen-kernel/zen-kernel/f787614c40519eb2c8ebdc116b2cd09d46e5ec85/include/uapi/linux/ntsync.h
-wget -O /usr/include/linux/userfaultfd.h https://raw.githubusercontent.com/zen-kernel/zen-kernel/f787614c40519eb2c8ebdc116b2cd09d46e5ec85/include/uapi/linux/userfaultfd.h
-if [ -d /usr/lib/i386-linux-gnu ]; then wget -O wine.deb https://dl.winehq.org/wine-builds/ubuntu/dists/bionic/main/binary-i386/wine-stable_4.0.3~bionic_i386.deb; fi
-if [ -d /usr/lib/x86_64-linux-gnu ]; then wget -O wine.deb https://dl.winehq.org/wine-builds/ubuntu/dists/bionic/main/binary-amd64/wine-stable_4.0.3~bionic_amd64.deb; fi
+while true; do
+    echo "input '1' if ready："
+    read input
+    if [ "$input" == "1" ]; then
+        break
+    else
+		echo "$input"
+        echo "not ready??"
+		break
+    fi
+    sleep 1
+done
+echo "you are ready to build debootstrap"
+
+if [ -f "sdl.tar.gz" ];then
+	echo "sdl.tar.gz already exist"
+else
+	wget -O sdl.tar.gz https://www.libsdl.org/release/SDL2-${sdl2_version}.tar.gz
+fi
+if [ -f "faudio.tar.gz" ];then
+	echo "faudio.tar.gz already exist"
+else
+	wget -O faudio.tar.gz https://github.com/FNA-XNA/FAudio/archive/${faudio_version}.tar.gz
+fi
+if [ -f "vulkan-loader.tar.gz" ]; then
+	echo "vulkan-loader.tar.gz already exist"
+else
+	wget -O vulkan-loader.tar.gz https://github.com/KhronosGroup/Vulkan-Loader/archive/v${vulkan_loader_version}.tar.gz
+fi
+if [ -f "vulkan-headers.tar.gz" ]; then
+	echo "vulkan-headers.tar.gz already exist"
+else
+	wget -O vulkan-headers.tar.gz https://github.com/KhronosGroup/Vulkan-Headers/archive/v${vulkan_headers_version}.tar.gz
+fi
+if [ -f "spirv-headers.tar.gz" ]; then
+	echo "spirv-headers.tar.gz already exist"
+else
+	wget -O spirv-headers.tar.gz https://github.com/KhronosGroup/SPIRV-Headers/archive/${spirv_headers_version}.tar.gz
+fi
+if [ -f "libpcap.tar.gz" ]; then
+	echo "libpcap.tar.gz already exist"
+else
+	wget -O libpcap.tar.gz https://www.tcpdump.org/release/libpcap-${libpcap_version}.tar.gz
+fi
+if [ -f "libxkbcommon.tar.xz" ]; then
+	echo "libpcap.tar.gz already exist"
+else
+	wget -O libxkbcommon.tar.xz https://xkbcommon.org/download/libxkbcommon-${libxkbcommon_version}.tar.xz
+fi
+if [ -f "python3.tar.gz" ]; then
+	echo  "python3.tar.gz already exist"
+else
+	wget -O python3.tar.gz https://www.python.org/ftp/python/${python3_version}/Python-${python3_version}.tgz
+fi
+if [ -f "meson.tar.gz" ];then
+	echo  "meson.tar.gz already exist"
+else
+	wget -O meson.tar.gz https://github.com/mesonbuild/meson/releases/download/${meson_version}/meson-${meson_version}.tar.gz
+fi
+if [ -f" mingw.tar.xz" ];then
+	echo  "mingw.tar.xz already exist"
+else
+	wget -O mingw.tar.xz http://techer.pascal.free.fr/Red-Rose_MinGW-w64-Toolchain/Red-Rose-MinGW-w64-Posix-Urct-v12.0.0.r0.g819a6ec2e-Gcc-11.4.1.tar.xz
+fi
+# wget -O /usr/include/linux/ntsync.h https://raw.githubusercontent.com/zen-kernel/zen-kernel/f787614c40519eb2c8ebdc116b2cd09d46e5ec85/include/uapi/linux/ntsync.h
+# wget -O /usr/include/linux/userfaultfd.h https://raw.githubusercontent.com/zen-kernel/zen-kernel/f787614c40519eb2c8ebdc116b2cd09d46e5ec85/include/uapi/linux/userfaultfd.h
+# if [ -d /usr/lib/i386-linux-gnu ]; then wget -O wine.deb https://dl.winehq.org/wine-builds/ubuntu/dists/focal/main/binary-i386/wine-devel-dbg_5.7~focal_i386.deb; fi
+# if [ -d /usr/lib/x86_64-linux-gnu ]; then wget -O wine.deb https://dl.winehq.org/wine-builds/ubuntu/dists/focal/main/binary-amd64/wine-devel-amd64_5.7~focal_amd64.deb; fi
 git clone https://gitlab.freedesktop.org/gstreamer/gstreamer.git -b 1.22
 tar xf sdl.tar.gz
 tar xf faudio.tar.gz
@@ -159,7 +219,10 @@ cd ../ && rm -r build && mkdir build && cd build
 ../Python-${python3_version}/configure --enable-optimizations
 make -j$(nproc)
 make -j$(nproc) install
+apt-get -y install bison
 pip3 install setuptools
+pip3 install --force-reinstall ninja
+
 cd ../libxkbcommon-${libxkbcommon_version}
 meson setup build -Denable-docs=false
 meson compile -C build
@@ -168,7 +231,7 @@ cd ../gstreamer
 meson setup build
 ninja -C build
 ninja -C build install
-cd /opt && rm -r /opt/build_libs
+# cd /opt && rm -r /opt/build_libs
 EOF
 
 	chmod +x "${MAINDIR}"/prepare_chroot.sh
@@ -179,14 +242,14 @@ EOF
 mkdir -p "${MAINDIR}"
 
 debootstrap --arch amd64 $CHROOT_DISTRO "${CHROOT_X64}" $CHROOT_MIRROR
-debootstrap --arch i386 $CHROOT_DISTRO "${CHROOT_X32}" $CHROOT_MIRROR
+# debootstrap --arch i386 $CHROOT_DISTRO "${CHROOT_X32}" $CHROOT_MIRROR
 
 create_build_scripts
-prepare_chroot 32
+# prepare_chroot 32
 prepare_chroot 64
 
 rm "${CHROOT_X64}"/opt/prepare_chroot.sh
-rm "${CHROOT_X32}"/opt/prepare_chroot.sh
+# rm "${CHROOT_X32}"/opt/prepare_chroot.sh
 
-clear
+# clear
 echo "Done"
